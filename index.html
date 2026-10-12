@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sutil · Harmonização facial na medida</title>
+<meta name="description" content="Sutil é uma clínica de estética facial de demonstração. Harmonização facial na medida: avaliação antes de qualquer agulha, dose pequena, em etapas, com o seu rosto como referência.">
+<meta name="theme-color" content="#141c1e">
+<!-- DEPLOY STEP: trocar og:url e og:image pela URL absoluta do site no ar antes de publicar -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sutil · Harmonização facial na medida">
+<meta property="og:description" content="A dose certa é a que ninguém nota. Só o descanso no seu rosto. Site de demonstração.">
+<meta property="og:url" content="https://www.exemplo.com.br/">
+<meta property="og:image" content="https://www.exemplo.com.br/assets/hero-ending.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23141c1e'/%3E%3Cpath d='M16 5c3.6 5.4 7 9.3 7 13.6A7 7 0 0 1 9 18.6C9 14.3 12.4 10.4 16 5z' fill='none' stroke='%239ccfbd' stroke-width='1.6'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono&family=Hanken+Grotesk:wght@300;400;500&family=Italiana&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#141c1e;        /* a pedra molhada do vídeo, nunca preto puro */
+  --canvas-2:#0f1517;
+  --panel:#1f2a2d;
+  --stone:#e5e7e3;
+  --stone-2:#d8dcd8;
+  --accent:#9ccfbd;
+  --accent-hover:#b4dfd0;
+  --accent-muted:rgba(156,207,189,.28);
+  --text-primary:#f1efe9;
+  --text-secondary:#aab6b4;
+  --ink:#161d1e;
+  --ink-2:#4b5658;
+  --line-dark:rgba(241,239,233,.14);
+  --line-light:rgba(23,28,27,.16);
+  --display:'Italiana','Didot','Bodoni MT',serif;
+  --text:'Hanken Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'DM Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --ease-inout:cubic-bezier(.65,0,.35,1);
+  --tshadow:0 1px 2px rgba(5,5,10,.95),0 3px 12px rgba(5,5,10,.78),0 10px 44px rgba(5,5,10,.8);
+  --gutter:clamp(16px,4vw,48px);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html,body{overflow-x:hidden;overflow-x:clip}
+body{margin:0;background:var(--canvas);color:var(--text-primary);font:300 17px/1.6 var(--text);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body.paused *,body.paused *::before,body.paused *::after{animation-play-state:paused!important}
+img{max-width:100%;display:block}
+a{color:inherit}
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:.005em;margin:0}
+p{margin:0}
+.sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:12px;top:-60px;z-index:100;padding:10px 14px;background:var(--accent);color:var(--ink);border-radius:8px;font-weight:500;text-decoration:none;transition:top .25s var(--ease-out)}
+.skip:focus{top:12px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.kicker{font:400 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.light .kicker{color:#3f7f6a}
+.wrap{width:min(1120px,100% - 2*var(--gutter));margin-inline:auto}
+
+/* ambient layer */
+.ambient{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:var(--canvas)}
+/* sem filter: blur, que custava GPU a cada quadro; o próprio gradiente já é o desfoque */
+.ambient .glow{position:absolute;width:70vmax;height:70vmax;border-radius:50%;opacity:.5;will-change:transform}
+.ambient .g1{left:-20vmax;top:-10vmax;background:radial-gradient(circle,rgba(156,207,189,.2) 0%,rgba(156,207,189,.11) 26%,rgba(156,207,189,.04) 48%,rgba(156,207,189,0) 66%)}
+.ambient .g2{right:-25vmax;bottom:-25vmax;background:radial-gradient(circle,rgba(190,205,214,.15) 0%,rgba(190,205,214,.08) 26%,rgba(190,205,214,.03) 48%,rgba(190,205,214,0) 66%)}
+.ambient.live .g1{animation:drift1 90s var(--ease-inout) infinite alternate -30s}
+.ambient.live .g2{animation:drift2 110s var(--ease-inout) infinite alternate -50s}
+@keyframes drift1{from{transform:translate(0,0)}to{transform:translate(18vmax,12vmax)}}
+@keyframes drift2{from{transform:translate(0,0)}to{transform:translate(-16vmax,-14vmax)}}
+.ambient .grain{position:absolute;inset:0;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .9 0 0 0 0 .92 0 0 0 0 .9 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* nav */
+.nav{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px var(--gutter);transition:background .5s var(--ease-out),box-shadow .5s var(--ease-out)}
+.nav::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(rgba(13,18,17,.72),rgba(13,18,17,0));pointer-events:none;transition:opacity .5s var(--ease-out)}
+.nav.scrolled{background:rgba(13,18,17,.92);box-shadow:0 1px 0 var(--line-dark)}
+.nav.scrolled::before{opacity:0}
+.wordmark{font:400 26px/1 var(--display);letter-spacing:.06em;text-decoration:none;color:var(--text-primary)}
+.nav-links{display:flex;gap:28px;margin:0;padding:0;list-style:none}
+.nav-links a{font:400 13px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;text-decoration:none;color:var(--text-secondary);transition:color .3s var(--ease-out)}
+.nav-links a:hover{color:var(--text-primary)}
+.btn{display:inline-block;padding:13px 22px;border-radius:999px;background:var(--accent);color:var(--ink);font:500 14px/1 var(--text);letter-spacing:.02em;text-decoration:none;border:0;cursor:pointer;text-shadow:none;transition:background .3s var(--ease-out),transform .4s var(--ease-out),box-shadow .4s var(--ease-out)}
+.btn:hover{background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 10px 30px rgba(156,207,189,.18)}
+.btn-ghost{background:transparent;color:var(--text-primary);box-shadow:inset 0 0 0 1px rgba(241,239,233,.35)}
+.btn-ghost:hover{background:rgba(241,239,233,.08);box-shadow:inset 0 0 0 1px rgba(241,239,233,.6)}
+.nav .btn{padding:11px 18px;font-size:13px}
+@media (pointer:coarse){.btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}}
+
+/* hero */
+.hero{position:relative;z-index:1;height:520vh;background:var(--canvas-2)}
+.stage{position:sticky;top:0;height:100vh;overflow:hidden;background:var(--canvas-2)}
+.poster{position:absolute;inset:0;background:var(--canvas-2) center/cover no-repeat}
+#hero{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.1s var(--ease-out);will-change:transform;transform:translateZ(0)}
+.stage.video-ready #hero{opacity:1}
+.stage.video-failed #hero{display:none}
+.scrim{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 120% 90% at 50% 45%,rgba(10,10,18,0) 35%,rgba(10,10,18,.62) 100%)}
+.ring{position:absolute;left:50%;bottom:30px;width:34px;height:34px;transform:translateX(-50%);color:var(--accent);opacity:.9;transition:opacity .6s var(--ease-out)}
+.ring circle{transition:stroke-dashoffset .15s linear;transform:rotate(-90deg);transform-origin:50% 50%}
+.stage.video-ready .ring,.stage.video-failed .ring{opacity:0}
+.cue{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--text-secondary);font:400 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;opacity:0;transition:opacity .8s var(--ease-out)}
+.stage.video-ready .cue,.stage.video-failed .cue{opacity:1}
+.stage.gone .cue{opacity:0}
+.cue svg{width:16px;height:16px;animation:cue 2.6s var(--ease-inout) infinite}
+@keyframes cue{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(5px);opacity:1}}
+@media (max-height:560px){.cue{display:none}}
+
+.band{position:absolute;opacity:0;--k:0;pointer-events:none;text-shadow:var(--tshadow);isolation:isolate;will-change:opacity}   /* isolate: o scrim ::before (z-index -1) fica dentro da faixa, acima do vídeo, e não no fundo do palco */
+.band::before{content:"";position:absolute;inset:-40% -30%;z-index:-1;pointer-events:none;opacity:calc(.25 + .75*var(--k,1));background:radial-gradient(ellipse 64% 64% at 50% 50%,rgba(5,5,10,var(--scrim,.62)) 0%,rgba(5,5,10,calc(var(--scrim,.62)*.66)) 44%,rgba(5,5,10,0) 76%)}   /* a elipse morre dentro da caixa do ::before: nunca uma borda dura */
+.band .title{font:400 clamp(34px,4.4vw,62px)/1.06 var(--display);letter-spacing:.005em;margin:0}
+.band .sub{font:300 clamp(16px,1.25vw,19px)/1.5 var(--text);color:var(--text-primary);margin:18px 0 0;max-width:34ch}
+.band .w{display:inline-block;will-change:transform,opacity}
+.band-1{left:clamp(24px,9vw,140px);top:50%;transform:translateY(-54%);width:min(44vw,560px);--scrim:.8}
+.band-2{right:clamp(24px,9vw,140px);top:50%;transform:translateY(-54%);width:min(46vw,600px);text-align:right;--scrim:.8}
+.band-3{left:clamp(24px,9vw,140px);top:50%;transform:translateY(-54%);width:min(44vw,560px);--scrim:.82}
+.band-4{left:clamp(24px,9vw,140px);bottom:10vh;width:min(29vw,410px);--scrim:.8}
+.band-4 .sub{max-width:40ch}
+.band-4 .cta-row{margin-top:26px}
+.band-4.active .btn{pointer-events:auto}
+.band[data-entry=drift] .w{--kc:clamp(0,(var(--k,0) - var(--th,0))*2.8,1);opacity:var(--kc);transform:translateY(calc((1 - var(--kc))*-30px))}
+.band[data-entry=punch] .w{--kc:clamp(0,(var(--k,0) - var(--th,0))*3,1);--ks:clamp(0,(var(--k,0) - var(--th,0) - var(--sd,.1))*var(--ss,3.2),1);opacity:var(--kc);transform:scale(calc(0.6 + (0.4 + var(--ov,.12))*var(--kc) - var(--ov,.12)*var(--ks)))}
+.band[data-entry=punch] .w.em{--ov:.26;--sd:.16;--ss:2.6;color:var(--accent)}
+.band[data-entry=rise] .w{--kc:clamp(0,(var(--k,0) - var(--th,0))*3,1);opacity:var(--kc);transform:translateY(calc((1 - var(--kc))*18px))}
+.band[data-entry=rise] .sub{--ks:clamp(0,(var(--k,0) - .62)*4,1);opacity:var(--ks);transform:translateY(calc((1 - var(--ks))*12px))}
+.band[data-entry=rise] .cta-row{--kb:clamp(0,(var(--k,0) - .76)*5,1);opacity:var(--kb);transform:translateY(calc((1 - var(--kb))*10px))}
+.band[data-entry=blur] .title{position:relative}
+.band[data-entry=blur] .soft{position:absolute;inset:0;filter:blur(12px);opacity:calc(1 - var(--k,0))}
+.band[data-entry=blur] .sharp{opacity:var(--k,0)}
+.band[data-entry=blur] .sub{--ks:clamp(0,(var(--k,0) - .45)*2.6,1);opacity:var(--ks);transform:translateY(calc((1 - var(--ks))*8px))}
+.chip{display:inline-block;padding:7px 11px;border-radius:10px;background:rgba(8,8,15,.66);border:1px solid rgba(96,96,126,.3);text-shadow:0 1px 3px rgba(5,5,10,.85);font:400 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
+.band .chip{margin-bottom:16px}
+
+/* the static hero (the five gates, identical in JS) */
+.static-hero{display:none;position:absolute;inset:0;flex-direction:column;justify-content:flex-end;padding:0 var(--gutter) 60px;text-shadow:var(--tshadow)}
+.static-hero::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(13,18,17,.25),rgba(13,18,17,.1) 40%,rgba(13,18,17,.82) 100%)}
+.static-hero>*{position:relative}
+.static-hero h1{font-size:clamp(38px,9vw,64px);line-height:1.04;max-width:14ch}
+.static-hero p{margin:16px 0 26px;max-width:36ch;font-size:17px}
+.static-hero .kicker{margin-bottom:18px;color:var(--accent)}
+@media (max-width:720px),(orientation:portrait) and (max-width:1024px),(orientation:portrait) and (pointer:coarse),(orientation:landscape) and (pointer:coarse) and (max-height:560px),(prefers-reduced-motion:reduce){
+  .hero{height:auto}
+  .stage{position:relative;height:100svh;min-height:560px}
+  #hero,.bands,.ring,.cue,.scrim,.poster{display:none}
+  .static-hero{display:flex;background:var(--canvas-2) url("assets/hero-ending.jpg") center/cover no-repeat}
+}
+
+/* sections */
+main{position:relative;z-index:1}
+.sec{position:relative;padding:clamp(80px,11vw,150px) 0}
+.sec.light{background:var(--stone);color:var(--ink)}
+.sec.light .sub,.sec.light p{color:var(--ink)}
+.sec.dark{background:transparent;color:var(--text-primary)}
+.sec h2{font-size:clamp(34px,4.2vw,58px);line-height:1.06;max-width:18ch}
+.sec .lede{font-size:clamp(17px,1.3vw,20px);line-height:1.6;max-width:52ch;color:var(--text-secondary)}
+.sec.light .lede{color:var(--ink-2)}
+.sec .kicker{display:block;margin-bottom:22px}
+.part{opacity:0;transform:translateY(22px);transition:opacity .9s var(--ease-out),transform 1s var(--ease-out)}
+.sec.in .part{opacity:1;transform:none}
+.sec.in .part:nth-child(2){transition-delay:.08s}
+.sec.in .part:nth-child(3){transition-delay:.16s}
+.sec.in .part:nth-child(4){transition-delay:.24s}
+.sec.in .part:nth-child(5){transition-delay:.32s}
+.sec.in .part:nth-child(6){transition-delay:.4s}
+.sec.in.done .part:nth-child(n){transition-delay:0s}
+.divider{position:absolute;left:50%;top:0;transform:translate(-50%,-50%);width:120px;height:120px;pointer-events:none}
+.divider circle{fill:none;stroke:var(--accent);stroke-width:1;stroke-dasharray:400;stroke-dashoffset:400;opacity:.55;transition:stroke-dashoffset 2.2s var(--ease-out)}
+.divider circle:nth-child(2){transition-delay:.25s;opacity:.35}
+.divider circle:nth-child(3){transition-delay:.5s;opacity:.2}
+.sec.in .divider circle{stroke-dashoffset:0}
+.sec.light .divider{display:none}
+
+/* plumb line, the signature */
+.plumb{position:absolute;top:0;bottom:0;right:clamp(14px,4.2vw,64px);width:2px;z-index:2;pointer-events:none}
+.plumb-line{position:absolute;inset:0;background:linear-gradient(var(--accent),var(--accent) 70%,rgba(156,207,189,.25));transform:scaleY(0);transform-origin:50% 0;will-change:transform;opacity:.85}
+.plumb .tick{position:absolute;right:0;top:0;height:1px;width:14px;background:var(--accent);opacity:0;transition:opacity .6s var(--ease-out),transform .8s var(--ease-out);transform:translateX(6px)}
+.plumb .tick span{position:absolute;right:20px;top:-7px;font:400 11px/1 var(--mono);letter-spacing:.12em;color:var(--accent);white-space:nowrap}
+.plumb .tick.on{opacity:1;transform:none}
+.light .tick span{color:#3f7f6a}
+
+/* S1 promessa */
+.promessa .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(32px,6vw,96px);align-items:center}
+.promessa .lede{margin-top:26px}
+.promessa .figure{position:relative;aspect-ratio:4/3;border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(23,28,27,.22)}
+.promessa .figure img{width:100%;height:100%;object-fit:cover}
+.promessa .ripple{position:absolute;right:-10%;top:-16%;width:70%;aspect-ratio:1;pointer-events:none}
+.promessa .ripple circle{fill:none;stroke:#3f7f6a;stroke-width:1;opacity:.35}
+.promessa.live .ripple circle{animation:breathe 7s var(--ease-inout) infinite}
+.promessa .ripple circle:nth-child(2){animation-delay:-2.3s}
+.promessa .ripple circle:nth-child(3){animation-delay:-4.6s}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.35}50%{transform:scale(1.06);opacity:.18}}
+.regua{margin-top:clamp(56px,7vw,96px);display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line-light)}
+.regua .m{padding:28px 24px 0 0;border-right:1px solid var(--line-light)}
+.regua .m:last-child{border-right:0}
+.regua .val{font:400 clamp(36px,4vw,54px)/1 var(--display);color:var(--ink);display:flex;align-items:baseline;gap:8px}
+.regua .val small{font:400 13px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#3f7f6a}
+.regua .lbl{margin-top:12px;color:var(--ink-2);max-width:26ch;font-size:15px}
+
+/* S2 método */
+.metodo .steps{margin:clamp(40px,5vw,72px) 0 0;padding:0;list-style:none;border-top:1px solid var(--line-dark)}
+.metodo .step{display:grid;grid-template-columns:80px 120px 1fr;gap:clamp(16px,3vw,40px);align-items:start;padding:clamp(28px,3.5vw,44px) 0;border-bottom:1px solid var(--line-dark)}
+.metodo .n{font:400 13px/1 var(--mono);letter-spacing:.14em;color:var(--accent);padding-top:10px}
+.metodo .icon{width:72px;height:72px;color:var(--accent)}
+.metodo .icon path,.metodo .icon circle,.metodo .icon line{fill:none;stroke:currentColor;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
+.metodo.live .icon{animation:glow 6s var(--ease-inout) infinite}
+.metodo .step:nth-child(2) .icon{animation-delay:-2s}
+.metodo .step:nth-child(3) .icon{animation-delay:-4s}
+@keyframes glow{0%,100%{opacity:.75}50%{opacity:1}}
+.metodo h3{font-size:clamp(26px,2.6vw,36px);margin-bottom:10px}
+.metodo .step p{color:var(--text-secondary);max-width:54ch}
+.metodo .more{margin-top:36px}
+.link{display:inline-flex;align-items:baseline;gap:10px;color:var(--text-primary);text-decoration:none;font:400 15px/1 var(--text);letter-spacing:.02em;border-bottom:1px solid var(--accent-muted);padding-bottom:6px;transition:border-color .3s var(--ease-out),gap .3s var(--ease-out)}
+.link:hover{border-color:var(--accent);gap:16px}
+.link svg{width:14px;height:14px;transform:translateY(1px)}
+
+/* S3 espaço */
+.espaco .wrap{display:grid;grid-template-columns:.9fr 1.1fr;gap:0;align-items:stretch}
+.espaco .panel{background:var(--stone-2);padding:clamp(36px,5vw,72px);border-radius:18px 0 0 18px;display:flex;flex-direction:column;justify-content:center}
+.espaco .panel .mono{margin-top:34px;font:400 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#3f7f6a}
+.espaco .photo{position:relative;border-radius:0 18px 18px 0;overflow:hidden;min-height:420px}
+.espaco .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.espaco .photo::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(231,228,221,.0) 40%,rgba(231,228,221,.18) 100%);opacity:.0;transition:opacity 2s}
+.espaco.live .photo::after{animation:sheen 12s var(--ease-inout) infinite}
+@keyframes sheen{0%,100%{opacity:0;transform:translateX(-8%)}50%{opacity:1;transform:translateX(8%)}}
+
+/* S4 medos + the hold */
+.medos .head{display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end}
+.dose{margin:clamp(40px,5vw,64px) auto 0;display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;max-width:620px;padding:22px 26px;border-radius:18px;background:var(--panel);border:1px solid var(--line-dark)}
+.dose-btn{position:relative;width:96px;height:120px;border:0;background:transparent;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:16px;color:var(--accent);--fill:0}
+.dose-btn svg{width:100%;height:100%;overflow:visible}
+.dose-btn .outline{fill:none;stroke:currentColor;stroke-width:1.3}
+.dose-btn .liquid{fill:currentColor;opacity:.9;transform:translateY(calc((1 - var(--fill))*100%));transform-origin:50% 100%;transition:none}
+.dose-btn .mark{stroke:var(--text-secondary);stroke-width:1;stroke-dasharray:3 3}
+.dose-btn .halo{position:absolute;inset:-6px;border-radius:20px;box-shadow:0 0 0 1px var(--accent-muted),0 0 40px rgba(156,207,189,.25);opacity:0;transition:opacity .5s var(--ease-out)}
+.medos.live .dose-btn .halo{animation:halo 5s var(--ease-inout) infinite}
+@keyframes halo{0%,100%{opacity:.25}50%{opacity:.7}}
+.dose-btn:hover .halo,.dose-btn:focus-visible .halo,.dose-btn.holding .halo{opacity:1;animation:none}
+.dose-txt .lbl{font:400 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.dose-txt .hint{margin-top:10px;color:var(--text-secondary);font-size:15px}
+.dose-txt .done{margin-top:10px;font:400 clamp(20px,1.8vw,24px)/1.3 var(--display);color:var(--text-primary);opacity:0;transform:translateY(6px);transition:opacity .8s var(--ease-out),transform .8s var(--ease-out)}
+.medos.dosed .dose-txt .done{opacity:1;transform:none}
+.medos.dosed .dose-txt .hint{display:none}
+.fears{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:clamp(40px,5vw,64px)}
+.fear{padding:28px 26px 30px;border-radius:16px;background:rgba(27,36,35,.78);border:1px solid var(--line-dark)}
+.fear .q{font:400 clamp(22px,1.9vw,27px)/1.25 var(--display);color:var(--text-primary)}
+.fear{transition:border-color 1.1s var(--ease-out),box-shadow 1.1s var(--ease-out),opacity .9s var(--ease-out),transform 1s var(--ease-out)}
+.fear .a{margin-top:16px;color:var(--text-secondary);font-size:15.5px;transition:color 1.1s var(--ease-out)}
+/* as respostas são legíveis desde o início; a dose na medida só acende os cartões, em sequência */
+.medos.dosed .fear{border-color:rgba(156,207,189,.45);box-shadow:0 0 0 1px rgba(156,207,189,.12),0 20px 50px rgba(0,0,0,.25)}
+.medos.dosed .fear .a{color:var(--text-primary)}
+.medos.dosed .fear:nth-child(2),.medos.dosed .fear:nth-child(2) .a{transition-delay:.25s}
+.medos.dosed .fear:nth-child(3),.medos.dosed .fear:nth-child(3) .a{transition-delay:.5s}
+.medos .mirror{margin-top:clamp(40px,5vw,64px);border-radius:18px;overflow:hidden;aspect-ratio:21/9;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.medos .mirror img{width:100%;height:100%;object-fit:cover}
+
+/* S5 perguntas */
+.perguntas .wrap{display:grid;grid-template-columns:.8fr 1.2fr;gap:clamp(32px,6vw,96px)}
+.faq{margin:0;padding:0;list-style:none;border-top:1px solid var(--line-light)}
+.faq li{border-bottom:1px solid var(--line-light)}
+.faq button{width:100%;display:flex;justify-content:space-between;align-items:baseline;gap:20px;text-align:left;padding:22px 0;background:none;border:0;cursor:pointer;color:var(--ink);font:400 clamp(20px,1.7vw,24px)/1.3 var(--display)}
+.faq button .plus{flex:0 0 auto;width:18px;height:18px;position:relative;transform:translateY(2px)}
+.faq button .plus::before,.faq button .plus::after{content:"";position:absolute;left:50%;top:50%;background:#3f7f6a;transform:translate(-50%,-50%);transition:transform .4s var(--ease-out)}
+.faq button .plus::before{width:18px;height:1px}
+.faq button .plus::after{width:1px;height:18px}
+.faq button[aria-expanded=true] .plus::after{transform:translate(-50%,-50%) scaleY(0)}
+.faq .a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .5s var(--ease-out)}
+.faq .a.open{grid-template-rows:1fr}
+.faq .a>div{overflow:hidden}
+.faq .a p{padding:0 0 24px;color:var(--ink-2);max-width:58ch}
+
+/* S6 agendar */
+.agendar{overflow:hidden}
+.agendar .wrap{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,6vw,96px);align-items:center}
+.form{padding:clamp(26px,3vw,40px);border-radius:20px;background:var(--panel);border:1px solid var(--line-dark);position:relative}
+.field{display:block;margin-bottom:18px}
+.field span{display:block;font:400 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:8px}
+.field input,.field textarea{width:100%;padding:14px 16px;border-radius:12px;background:rgba(13,18,17,.6);border:1px solid rgba(241,239,233,.18);color:var(--text-primary);font:300 16px/1.4 var(--text);transition:border-color .3s var(--ease-out),box-shadow .3s var(--ease-out)}
+.field input::placeholder,.field textarea::placeholder{color:rgba(174,182,178,.55)}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-muted)}
+.field textarea{min-height:96px;resize:vertical}
+.form .btn{width:100%;margin-top:6px;padding:16px 22px;font-size:15px}
+.form .micro{margin-top:14px;font-size:13px;color:var(--text-secondary);text-align:center}
+.form .ok{display:none;text-align:center;padding:20px 0}
+.form .ok h3{font-size:clamp(26px,2.4vw,34px);margin-bottom:12px}
+.form .ok p{color:var(--text-secondary)}
+.form .ok .demo{margin-top:12px;font:400 12px/1.5 var(--mono);letter-spacing:.06em;color:var(--accent)}
+.form.sent form{display:none}
+.form.sent .ok{display:block}
+.drops{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.drops i{position:absolute;top:-6%;width:2px;height:22px;border-radius:2px;background:linear-gradient(rgba(156,207,189,0),rgba(156,207,189,.55));opacity:0}
+.agendar.live .drops i{animation:fall 14s linear infinite}
+@keyframes fall{0%{transform:translateY(0);opacity:0}8%{opacity:.8}92%{opacity:.6}100%{transform:translateY(110vh);opacity:0}}
+
+/* footer */
+footer{position:relative;z-index:1;border-top:1px solid var(--line-dark);padding:48px 0 40px;color:var(--text-secondary);font-size:14px}
+footer .wrap{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:start}
+footer .wordmark{font-size:30px}
+footer .tag{margin-top:8px;font:400 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+footer nav{display:flex;flex-wrap:wrap;gap:22px}
+footer nav a{text-decoration:none;color:var(--text-secondary);font:400 13px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;transition:color .3s var(--ease-out)}
+footer nav a:hover{color:var(--text-primary)}
+footer .legal{grid-column:1 / -1;margin-top:18px;max-width:72ch;line-height:1.6}
+footer .copy{grid-column:1 / -1;font:400 12px/1 var(--mono);letter-spacing:.08em;color:var(--text-secondary)}
+
+/* responsive */
+@media (max-width:980px){
+  .promessa .grid,.espaco .wrap,.perguntas .wrap,.agendar .wrap{grid-template-columns:1fr}
+  .espaco .panel{border-radius:18px 18px 0 0}
+  .espaco .photo{border-radius:0 0 18px 18px;min-height:320px}
+  .medos .head{grid-template-columns:1fr}
+  .fears{grid-template-columns:1fr}
+  .metodo .step{grid-template-columns:56px 1fr;grid-template-areas:"n icon" "n text"}
+  .metodo .n{grid-area:n}.metodo .icon{grid-area:icon;width:56px;height:56px}.metodo .text{grid-area:text}
+}
+@media (max-width:720px){
+  .nav-links{display:none}
+  .regua{grid-template-columns:1fr}
+  .regua .m{border-right:0;border-bottom:1px solid var(--line-light);padding:22px 0}
+  .regua .m:last-child{border-bottom:0}
+  .dose{grid-template-columns:1fr;text-align:center;justify-items:center}
+  .plumb{right:auto;left:8px}
+  .plumb .tick{right:auto;left:0;transform:translateX(-6px)}
+  .plumb .tick span{right:auto;left:20px}
+  footer .wrap{grid-template-columns:1fr}
+  .medos .mirror{aspect-ratio:4/3}
+}
+
+/* reduced motion, honored in full */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;transition-delay:0s!important;scroll-behavior:auto!important}
+  .part{opacity:1;transform:none}
+  .divider circle{stroke-dashoffset:0}
+  .plumb-line{transform:scaleY(1)}
+  .plumb .tick{opacity:1;transform:none}
+  .dose-txt .done{opacity:1;transform:none}
+  .dose-btn{--fill:1}
+  .drops i{display:none}
+  @media (max-width:720px){.plumb .tick{transform:translateX(-6px)}}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Pular para o conteúdo</a>
+<div class="ambient" aria-hidden="true"><div class="glow g1"></div><div class="glow g2"></div><div class="grain"></div></div>
+
+<header class="nav" id="nav">
+  <a class="wordmark" href="#topo" aria-label="Sutil, início">Sutil</a>
+  <nav aria-label="Seções"><ul class="nav-links">
+    <li><a href="#metodo">Método</a></li>
+    <li><a href="#medos">Medos</a></li>
+    <li><a href="#perguntas">Perguntas</a></li>
+  </ul></nav>
+  <a class="btn" href="#agendar">Agendar avaliação</a>
+</header>
+
+<section class="hero" id="topo" aria-label="Apresentação">
+  <div class="stage" id="stage">
+    <div class="poster" aria-hidden="true"></div>
+    <video id="hero" preload="none" muted playsinline aria-hidden="true" tabindex="-1"></video>
+    <div class="scrim" aria-hidden="true"></div>
+    <div class="bands">
+      <div class="band band-1" data-a="0" data-b="0.22" data-entry="drift" data-spread="0.5">
+        <span class="chip">Sutil · estética facial</span>
+        <p class="title split">Uma gota.<br>Não um rosto novo.</p>
+      </div>
+      <div class="band band-2" data-a="0.25" data-b="0.47" data-entry="punch" data-spread="0.45">
+        <p class="title split">A <em>medida</em> certa é a que não aparece.</p>
+      </div>
+      <div class="band band-3" data-a="0.50" data-b="0.73" data-entry="blur" data-ramp="0.034">
+        <p class="title blurify">Ninguém vai saber o que mudou.</p>
+        <p class="sub">Só vão notar que você parece descansada.</p>
+      </div>
+      <div class="band band-4" data-a="0.76" data-b="1" data-entry="rise" data-ramp="0.05" data-spread="0.5">
+        <h1 class="title split">Harmonização facial na medida.</h1>
+        <p class="sub">Avaliação antes de qualquer agulha. Dose pequena, em etapas, com o seu rosto como referência.</p>
+        <div class="cta-row"><a class="btn" href="#agendar">Agendar avaliação</a></div>
+      </div>
+    </div>
+    <div class="static-hero">
+      <span class="kicker">Sutil · estética facial</span>
+      <h1>Harmonização facial na medida.</h1>
+      <p>A dose certa é a que ninguém nota. Só o descanso no seu rosto.</p>
+      <div><a class="btn" href="#agendar">Agendar avaliação</a></div>
+    </div>
+    <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    <div class="cue" aria-hidden="true"><span>Role</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M3 6l5 5 5-5"/></svg></div>
+  </div>
+</section>
+
+<main id="main" tabindex="-1">
+  <div class="plumb" aria-hidden="true"><div class="plumb-line"></div></div>
+
+  <section class="sec light promessa" id="promessa" data-tick="01">
+    <div class="wrap">
+      <div class="grid">
+        <div>
+          <span class="kicker part">A medida</span>
+          <h2 class="part">Você continua sendo você. Só mais descansada.</h2>
+          <p class="lede part">Harmonização não é um rosto novo. É devolver ao seu rosto o que o cansaço tirou, em doses pequenas, uma etapa de cada vez. Quem te conhece vai perguntar se você viajou. Não vai perguntar o que você fez.</p>
+        </div>
+        <div class="part" style="position:relative">
+          <svg class="ripple" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="60"/><circle cx="100" cy="100" r="78"/><circle cx="100" cy="100" r="96"/></svg>
+          <div class="figure"><img src="assets/hero-ending.jpg" alt="A água em espelho depois da gota, o quadro final do vídeo" loading="lazy" decoding="async" width="1280" height="720"></div>
+        </div>
+      </div>
+      <div class="regua">
+        <div class="m part"><div class="val"><span class="num" data-to="1" data-dec="0">0</span></div><p class="lbl">avaliação antes de qualquer agulha</p></div>
+        <div class="m part"><div class="val"><span class="num" data-to="0.1" data-dec="1">0,0</span><small>ml</small></div><p class="lbl">a dose por ponto, nunca o frasco inteiro</p></div>
+        <div class="m part"><div class="val"><span class="num" data-to="15" data-dec="0">0</span><small>dias</small></div><p class="lbl">o retorno, incluso, para ajustar só se precisar</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec dark metodo" id="metodo" data-tick="02">
+    <svg class="divider" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="20"/><circle cx="60" cy="60" r="36"/><circle cx="60" cy="60" r="52"/></svg>
+    <div class="wrap">
+      <span class="kicker part">Como funciona</span>
+      <h2 class="part">Três etapas, sem pressa.</h2>
+      <ol class="steps">
+        <li class="step part">
+          <span class="n">01</span>
+          <svg class="icon" viewBox="0 0 72 72" aria-hidden="true"><path d="M14 50L50 14"/><path d="M20 44l4 4M26 38l4 4M32 32l4 4M38 26l4 4M44 20l4 4"/><path d="M12 56h48"/></svg>
+          <div class="text"><h3>Avaliação.</h3><p>Uma hora só para olhar o seu rosto, ouvir o que te incomoda e dizer, com sinceridade, o que fazer e o que não fazer.</p></div>
+        </li>
+        <li class="step part">
+          <span class="n">02</span>
+          <svg class="icon" viewBox="0 0 72 72" aria-hidden="true"><path d="M36 12c8 12 16 20 16 30a16 16 0 0 1-32 0c0-10 8-18 16-30z"/><path d="M28 44a8 8 0 0 0 6 7"/><path d="M14 60h44"/></svg>
+          <div class="text"><h3>A dose.</h3><p>Pouco produto, nos pontos certos. Se faltar, a gente completa no retorno. Se sobrar, não tem volta fácil. Por isso começa com menos.</p></div>
+        </li>
+        <li class="step part">
+          <span class="n">03</span>
+          <svg class="icon" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="32" r="20"/><path d="M24 28c3-6 9-9 15-8"/><path d="M36 52v8M26 60h20"/></svg>
+          <div class="text"><h3>O retorno.</h3><p>Quinze dias depois você volta, a gente olha junto e ajusta só se precisar. Está incluso.</p></div>
+        </li>
+      </ol>
+      <div class="more part"><a class="link" href="#agendar">Começar pela avaliação <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a></div>
+    </div>
+  </section>
+
+  <section class="sec light espaco" id="espaco" data-tick="03">
+    <div class="wrap">
+      <div class="panel">
+        <span class="kicker part">O lugar</span>
+        <h2 class="part">Um lugar silencioso.</h2>
+        <p class="lede part" style="margin-top:22px">Sem vitrine, sem fila, sem pressa. Uma sala, uma profissional, o tempo que precisar. Você entra com hora marcada e sai sem cruzar com ninguém na recepção.</p>
+        <p class="mono part">Jardins, São Paulo · com hora marcada</p>
+      </div>
+      <div class="photo part"><img src="assets/sala.jpg" alt="A sala de atendimento vazia, em pedra clara e linho, com luz suave vindo de cima" loading="lazy" decoding="async" width="1424" height="800"></div>
+    </div>
+  </section>
+
+  <section class="sec dark medos" id="medos" data-tick="04">
+    <svg class="divider" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="20"/><circle cx="60" cy="60" r="36"/><circle cx="60" cy="60" r="52"/></svg>
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <span class="kicker part">O que ouvimos na primeira consulta</span>
+          <h2 class="part">Os medos são os mesmos. As respostas também.</h2>
+        </div>
+      </div>
+      <div class="dose part">
+        <button class="dose-btn" id="dose" type="button" aria-label="Segure para dosar. Pressione e segure até a marca." aria-describedby="dose-hint">
+          <span class="halo" aria-hidden="true"></span>
+          <svg viewBox="0 0 96 120" aria-hidden="true">
+            <defs><clipPath id="dropclip"><path d="M48 8c14 22 30 38 30 60a30 30 0 0 1-60 0C18 46 34 30 48 8z"/></clipPath></defs>
+            <g clip-path="url(#dropclip)"><rect class="liquid" x="0" y="0" width="96" height="120"/></g>
+            <path class="outline" d="M48 8c14 22 30 38 30 60a30 30 0 0 1-60 0C18 46 34 30 48 8z"/>
+            <line class="mark" x1="12" y1="48" x2="84" y2="48"/>
+          </svg>
+        </button>
+        <div class="dose-txt">
+          <span class="lbl">Segure para dosar</span>
+          <p class="hint" id="dose-hint">Pressione e segure a gota até a marca. Solte cedo e ela volta.</p>
+          <p class="done">Parou na medida. É assim que a gente trabalha.</p>
+        </div>
+      </div>
+      <div class="fears">
+        <div class="fear part"><p class="q">“Tenho medo de ficar artificial.”</p><p class="a">Artificial é excesso. Aqui a regra é começar com menos e completar no retorno. Nunca o contrário.</p></div>
+        <div class="fear part"><p class="q">“E se eu não me reconhecer no espelho?”</p><p class="a">O seu rosto é a referência. Nada de modelo de revista, nada de tendência. O objetivo é você, descansada.</p></div>
+        <div class="fear part"><p class="q">“Dói?”</p><p class="a">Anestésico antes, agulhas finas, e você no controle. Se quiser parar, a gente para.</p></div>
+      </div>
+      <div class="mirror part"><img src="assets/espelho.jpg" alt="Uma mulher de costas, à distância, de frente para um espelho redondo numa sala de pedra em penumbra" loading="lazy" decoding="async" width="1424" height="800"></div>
+    </div>
+  </section>
+
+  <section class="sec light perguntas" id="perguntas" data-tick="05">
+    <div class="wrap">
+      <div>
+        <span class="kicker part">Antes de marcar</span>
+        <h2 class="part">O que todo mundo pergunta.</h2>
+      </div>
+      <ul class="faq part">
+        <li><button type="button" aria-expanded="false" aria-controls="faq1">Quanto tempo dura? <span class="plus" aria-hidden="true"></span></button><div class="a" id="faq1"><div><p>Toxina botulínica dura de 4 a 6 meses. Preenchimento com ácido hialurônico, de 12 a 18 meses. Depende do produto, da região e do seu corpo. Na avaliação a gente diz o prazo esperado para o seu caso.</p></div></div></li>
+        <li><button type="button" aria-expanded="false" aria-controls="faq2">Vou ficar inchada? Posso trabalhar no dia seguinte? <span class="plus" aria-hidden="true"></span></button><div class="a" id="faq2"><div><p>Pode. Inchaço leve e algum roxo são comuns nos primeiros dias e somem sozinhos. Só evite academia e sol forte por 48 horas.</p></div></div></li>
+        <li><button type="button" aria-expanded="false" aria-controls="faq3">É definitivo? <span class="plus" aria-hidden="true"></span></button><div class="a" id="faq3"><div><p>Não. Tudo o que usamos é temporário e reversível. O ácido hialurônico pode ser dissolvido se você mudar de ideia.</p></div></div></li>
+        <li><button type="button" aria-expanded="false" aria-controls="faq4">Quanto custa? <span class="plus" aria-hidden="true"></span></button><div class="a" id="faq4"><div><p>A avaliação custa R$ 250 e é abatida do primeiro procedimento. Os procedimentos começam em R$ 900. O valor exato sai da avaliação, não de uma tabela.</p></div></div></li>
+        <li><button type="button" aria-expanded="false" aria-controls="faq5">Quem aplica? <span class="plus" aria-hidden="true"></span></button><div class="a" id="faq5"><div><p>A profissional que te avalia é a mesma que aplica, em todas as etapas. Nunca alguém diferente.</p></div></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec dark agendar" id="agendar" data-tick="06">
+    <svg class="divider" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="20"/><circle cx="60" cy="60" r="36"/><circle cx="60" cy="60" r="52"/></svg>
+    <div class="drops" aria-hidden="true"></div>
+    <div class="wrap">
+      <div>
+        <span class="kicker part">Comece aqui</span>
+        <h2 class="part">Comece pela avaliação.</h2>
+        <p class="lede part" style="margin-top:22px">Uma hora, sem compromisso de fazer nada. Você sai sabendo o que o seu rosto precisa, e o que não precisa.</p>
+      </div>
+      <div class="form part" id="formbox">
+        <form id="form" novalidate>
+          <label class="field"><span>Seu nome</span><input type="text" name="nome" autocomplete="name" placeholder="Como você gosta de ser chamada" required></label>
+          <label class="field"><span>Seu WhatsApp</span><input type="tel" name="whatsapp" autocomplete="tel" inputmode="tel" placeholder="(11) 9 0000-0000" required></label>
+          <label class="field"><span>O que te incomoda? (opcional)</span><textarea name="mensagem" placeholder="Pode ser curto. A gente conversa na avaliação."></textarea></label>
+          <button class="btn" type="submit">Pedir horário</button>
+          <p class="micro">Sem compromisso. A gente responde no seu WhatsApp, em horário comercial.</p>
+        </form>
+        <div class="ok" role="status" aria-live="polite">
+          <h3>Pedido registrado.</h3>
+          <p>Num site no ar, este pedido chegaria no WhatsApp da clínica em até um dia útil.</p>
+          <p class="demo">Este é um site de demonstração: nenhuma mensagem foi enviada.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div><a class="wordmark" href="#topo">Sutil</a><p class="tag">Harmonização facial na medida.</p></div>
+    <nav aria-label="Rodapé"><a href="#metodo">Método</a><a href="#medos">Medos</a><a href="#perguntas">Perguntas</a><a href="#agendar">Agendar</a></nav>
+    <p class="legal">Sutil é uma marca fictícia, criada para demonstração. Qualquer semelhança com clínicas reais é coincidência. Vídeo e imagens gerados por inteligência artificial.</p>
+    <p class="copy">© 2026 Sutil · site de demonstração</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const smoothstep = (p, e0, e1) => { const t = clamp((p - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
+function rng(seed) { let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+
+const VIDEO_URL = 'assets/hero-scrub.mp4';
+const VIDEO_BYTES = 2731138; /* o tamanho real do encode: o recuo quando Content-Length falta */
+const POSTER_URL = 'assets/hero-poster.jpg';
+
+const body = document.body;
+const nav = $('#nav');
+const hero = $('.hero');
+const stage = $('#stage');
+const video = $('#hero');
+const ring = $('.ring');
+const posterLayer = $('.poster');
+const main = $('#main');
+const reduceMQ = matchMedia('(prefers-reduced-motion: reduce)');
+
+/* ---------- the split, once, seeded ---------- */
+function splitWords(el, mode, spread, seed) {
+  const r = rng(seed);
+  const nodes = [...el.childNodes];
+  const full = el.textContent.replace(/\s+/g, ' ').trim();
+  el.textContent = '';
+  const sr = document.createElement('span'); sr.className = 'sr-only'; sr.textContent = full; el.appendChild(sr);
+  const vis = document.createElement('span'); vis.setAttribute('aria-hidden', 'true'); el.appendChild(vis);
+  const words = [];
+  nodes.forEach(n => {
+    if (n.nodeType === 3) n.textContent.split(/\s+/).filter(Boolean).forEach(w => words.push({ w, em: false }));
+    else if (n.nodeName === 'BR') words.push({ br: true });
+    else n.textContent.split(/\s+/).filter(Boolean).forEach(w => words.push({ w, em: true }));
+  });
+  const total = words.filter(x => !x.br).length;
+  let i = 0;
+  words.forEach(x => {
+    if (x.br) { vis.appendChild(document.createElement('br')); return; }
+    const ws = document.createElement('span');
+    ws.className = 'w' + (x.em ? ' em' : '');
+    ws.textContent = x.w;
+    const th = (i / total) * spread + r() * 0.06;
+    ws.style.setProperty('--th', th.toFixed(3));
+    vis.appendChild(ws);
+    vis.appendChild(document.createTextNode(' '));
+    i++;
+  });
+}
+function blurify(el) {
+  const text = el.textContent.replace(/\s+/g, ' ').trim();
+  el.textContent = '';
+  const sr = document.createElement('span'); sr.className = 'sr-only'; sr.textContent = text;
+  const soft = document.createElement('span'); soft.className = 'soft'; soft.setAttribute('aria-hidden', 'true'); soft.textContent = text;
+  const sharp = document.createElement('span'); sharp.className = 'sharp'; sharp.setAttribute('aria-hidden', 'true'); sharp.textContent = text;
+  el.append(sr, soft, sharp);
+}
+$$('.band').forEach((b, n) => {
+  const spread = b.dataset.spread ? +b.dataset.spread : 0.5;
+  $$('.split', b).forEach(el => splitWords(el, b.dataset.entry, spread, 1000 + n));
+  $$('.blurify', b).forEach(blurify);
+});
+
+/* ---------- bands ---------- */
+const bands = $$('.band').map(el => ({
+  el, a: +el.dataset.a, b: +el.dataset.b,
+  ramp: el.dataset.ramp ? +el.dataset.ramp : null,
+  op: -1, k: -1, active: null
+}));
+let loadK = 0;
+function updateCaptions(p) {
+  for (let i = 0; i < bands.length; i++) {
+    const bd = bands[i];
+    const { a, b } = bd;
+    const f = Math.min(0.02, (b - a) / 3);
+    const inF = i === 0 ? 1 : smoothstep(p, a, a + f);
+    const outF = i === bands.length - 1 ? 1 : 1 - smoothstep(p, b - f, b);
+    const op = inF * outF;
+    const rampW = bd.ramp || Math.min(0.025, (b - a) * 0.35);
+    let k = clamp((p - a) / rampW, 0, 1);
+    if (i === 0) k = Math.max(k, loadK);
+    if (bd.op < 0 || Math.abs(op - bd.op) > 0.004 || ((op === 0 || op === 1) && op !== bd.op)) {
+      bd.el.style.opacity = op.toFixed(3); bd.op = op;
+    }
+    if (bd.k < 0 || Math.abs(k - bd.k) > 0.008 || ((k === 0 || k === 1) && k !== bd.k)) {
+      bd.el.style.setProperty('--k', k.toFixed(3)); bd.k = k;
+    }
+    const active = op > 0.02;
+    if (active !== bd.active) { bd.active = active; bd.el.classList.toggle('active', active); }
+  }
+}
+
+/* ---------- progress, interpolation, locked seeks ---------- */
+let heroOnScreen = true, heroH = 1, heroRange = 1;
+function measureHero() { heroH = hero.offsetHeight; heroRange = Math.max(1, heroH - innerHeight); }
+function heroProgress() {
+  /* sem leitura de layout no caminho quente: o hero começa no topo da página, então scrollY basta */
+  const y = scrollY;
+  heroOnScreen = y < heroH;
+  return clamp(y / heroRange, 0, 1);
+}
+let target = 0, shown = 0, rafId = null, lastTick = 0, lastSeekT = -1;
+let seekBusy = false, pendingTime = null;
+function requestSeek(t) {
+  if (!video.duration || !isFinite(video.duration)) return;
+  if (seekBusy) { pendingTime = t; return; }
+  seekBusy = true;
+  video.currentTime = t;
+}
+video.addEventListener('seeked', () => {
+  seekBusy = false;
+  if (pendingTime !== null) { const t = pendingTime; pendingTime = null; requestSeek(t); }
+});
+video.addEventListener('error', () => { seekBusy = false; pendingTime = null; failVideo(); });
+function tick(now) {
+  const dt = Math.min(100, now - (lastTick || now));
+  lastTick = now;
+  const k = 0.16;
+  shown += (target - shown) * (1 - Math.pow(1 - k, dt / 16.667));
+  if (Math.abs(target - shown) < 0.0005) { shown = target; rafId = null; lastTick = 0; }
+  else rafId = requestAnimationFrame(tick);
+  const t = shown * (video.duration || 0);
+  if (shown === target || Math.abs(t - lastSeekT) >= 1 / 30) { lastSeekT = t; requestSeek(t); }   /* nunca pede um seek menor que um quadro */
+  updateCaptions(shown);
+}
+function onScroll() {
+  target = heroProgress();
+  if (rafId === null && heroOnScreen) rafId = requestAnimationFrame(tick);
+  const gone = target >= 0.995;
+  if (gone !== stage.classList.contains('gone')) stage.classList.toggle('gone', gone);
+}
+addEventListener('resize', () => { measureHero(); if (scrubOn) onScroll(); });
+
+/* ---------- the Blob loader with the honest ring ---------- */
+let started = false, heroInited = false;
+function initHeroOnce() {
+  if (heroInited) return; heroInited = true;
+  posterLayer.style.backgroundImage = `url('${POSTER_URL}')`;
+  const img = new Image();
+  img.onload = startBlobFetch; img.onerror = startBlobFetch;
+  img.src = POSTER_URL;
+  setTimeout(startBlobFetch, 4000);
+}
+function startBlobFetch() { if (started) return; started = true; loadHeroBlob().catch(failVideo); }
+async function loadHeroBlob() {
+  const ctrl = new AbortController();
+  let watchdog = setTimeout(() => ctrl.abort(), 20000);
+  const res = await fetch(VIDEO_URL, { priority: 'low', signal: ctrl.signal });
+  if (!res.ok || !res.body) throw new Error('video ' + res.status);
+  const total = Number(res.headers.get('Content-Length')) || VIDEO_BYTES || 6000000;
+  const reader = res.body.getReader();
+  const chunks = []; let got = 0, lastRing = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    clearTimeout(watchdog); watchdog = setTimeout(() => ctrl.abort(), 20000);
+    chunks.push(value); got += value.length;
+    const frac = Math.min(1, got / total);
+    const now = performance.now();
+    if (now - lastRing > 100 || frac === 1) { lastRing = now; ring.style.setProperty('--ld', Math.round(126 * (1 - frac))); }
+  }
+  clearTimeout(watchdog);
+  ring.style.setProperty('--ld', 0);
+  video.src = URL.createObjectURL(new Blob(chunks, { type: 'video/mp4' }));
+  video.load();
+  video.addEventListener('canplay', () => {
+    requestSeek(heroProgress() * video.duration);
+    stage.classList.add('video-ready');
+  }, { once: true });
+}
+function failVideo() {
+  if (stage.classList.contains('video-failed')) return;
+  stage.classList.add('video-failed');
+}
+
+/* ---------- the five gates, live ---------- */
+const GATES = [
+  '(max-width: 720px)',
+  '(orientation: portrait) and (max-width: 1024px)',
+  '(orientation: portrait) and (pointer: coarse)',
+  '(orientation: landscape) and (pointer: coarse) and (max-height: 560px)',
+  '(prefers-reduced-motion: reduce)'
+];
+let scrubOn = false, loadRaf = null;
+function runLoadRamp() {
+  const t0 = performance.now();
+  const step = now => {
+    const t = clamp((now - t0) / 1500, 0, 1);
+    loadK = 1 - Math.pow(1 - t, 3);
+    updateCaptions(shown);
+    if (t < 1) loadRaf = requestAnimationFrame(step); else loadRaf = null;
+  };
+  if (loadRaf === null) loadRaf = requestAnimationFrame(step);
+}
+function enableScrub() {
+  if (scrubOn) return; scrubOn = true;
+  measureHero();
+  initHeroOnce();
+  addEventListener('scroll', onScroll, { passive: true });
+  bands.forEach(b => { b.op = -1; b.k = -1; b.active = null; });
+  unpinFinalStates();
+  shown = target = heroProgress();
+  updateCaptions(shown);
+  onScroll();
+  if (loadK < 1) runLoadRamp(); else updateCaptions(shown);
+}
+function disableScrub() {
+  if (!scrubOn) return; scrubOn = false;
+  removeEventListener('scroll', onScroll);
+  if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+}
+function applyHeroMode() {
+  if (GATES.some(q => matchMedia(q).matches)) disableScrub(); else enableScrub();
+}
+const MQLS = GATES.map(q => matchMedia(q));
+MQLS.forEach(m => m.addEventListener('change', applyHeroMode));
+
+/* ---------- nav state ---------- */
+let navScrolled = null;
+function navState() {
+  const s = scrollY > innerHeight * 0.6;
+  if (s !== navScrolled) { navScrolled = s; nav.classList.toggle('scrolled', s); }
+}
+addEventListener('scroll', navState, { passive: true });
+
+/* ---------- sections: entries, live loops ---------- */
+const secs = $$('.sec');
+const inObs = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting && !e.target.classList.contains('in')) {
+    e.target.classList.add('in');
+    setTimeout(() => e.target.classList.add('done'), 1400);
+    if (e.target.classList.contains('promessa')) runCounters();
+  }
+}), { threshold: 0.18 });
+const liveObs = new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('live', e.isIntersecting)), { threshold: 0.05 });
+secs.forEach(s => { inObs.observe(s); liveObs.observe(s); });
+liveObs.observe($('.ambient'));
+document.addEventListener('visibilitychange', () => body.classList.toggle('paused', document.hidden));
+
+/* ---------- the plumb line ---------- */
+const plumb = $('.plumb'), plumbLine = $('.plumb-line');
+let ticks = [], plumbShown = -1, mainTop = 0, mainH = 1;
+function layoutPlumb() {
+  mainTop = main.getBoundingClientRect().top + scrollY;   /* medido uma vez por layout, nunca por scroll */
+  mainH = Math.max(1, main.offsetHeight);
+  ticks.forEach(t => t.el.remove());
+  ticks = secs.map(s => {
+    const el = document.createElement('div'); el.className = 'tick';
+    const lbl = document.createElement('span'); lbl.textContent = s.dataset.tick; el.appendChild(lbl);
+    const y = s.offsetTop + 40;
+    el.style.top = y + 'px';
+    if (s.classList.contains('light')) el.classList.add('light');
+    plumb.appendChild(el);
+    return { el, y, on: false };
+  });
+  plumbShown = -1;
+  updatePlumb();
+}
+function updatePlumb() {
+  if (pinned) return;
+  const p = clamp((scrollY + innerHeight * 0.62 - mainTop) / mainH, 0, 1);
+  if (Math.abs(p - plumbShown) > 0.003 || (p === 1 && plumbShown !== 1) || (p === 0 && plumbShown !== 0)) {
+    plumbShown = p; plumbLine.style.transform = `scaleY(${p.toFixed(4)})`;
+  }
+  const y = p * mainH;
+  ticks.forEach(t => { const on = y >= t.y; if (on !== t.on) { t.on = on; t.el.classList.toggle('on', on); } });
+}
+addEventListener('scroll', updatePlumb, { passive: true });
+addEventListener('resize', () => { layoutPlumb(); updatePlumb(); });
+
+/* ---------- counters ---------- */
+let countersRan = false;
+function fmt(v, dec) { return v.toFixed(dec).replace('.', ','); }
+function runCounters() {
+  if (countersRan) return; countersRan = true;
+  $$('.num').forEach(el => {
+    const to = +el.dataset.to, dec = +el.dataset.dec;
+    if (pinned) { el.textContent = fmt(to, dec); return; }
+    const t0 = performance.now(); let last = '', lastAt = 0;
+    const step = now => {
+      const t = clamp((now - t0) / 1100, 0, 1);
+      const v = to * (1 - Math.pow(1 - t, 3));
+      const s = fmt(v, dec);
+      if ((now - lastAt > 90 && s !== last) || t === 1) { last = s; lastAt = now; el.textContent = t === 1 ? fmt(to, dec) : s; }
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+/* ---------- the hold: segure para dosar ---------- */
+const dose = $('#dose'), medos = $('#medos');
+let holdP = 0, holding = false, doseRaf = null, doseLast = 0, doseDone = false, fillShown = -1;
+function writeFill(v) { if (Math.abs(v - fillShown) > 0.005 || ((v === 0 || v === 1) && v !== fillShown)) { fillShown = v; dose.style.setProperty('--fill', v.toFixed(3)); } }
+function doseTick(now) {
+  const dt = Math.min(100, now - (doseLast || now)); doseLast = now;
+  holdP = clamp(holdP + (holding ? dt / 1600 : -dt / 900), 0, 1);
+  writeFill(holdP);
+  if (holdP >= 1 && !doseDone) completeDose();
+  if ((holding && holdP < 1) || (!holding && holdP > 0 && !doseDone)) doseRaf = requestAnimationFrame(doseTick);
+  else { doseRaf = null; doseLast = 0; }
+}
+function completeDose() { doseDone = true; holding = false; dose.classList.remove('holding'); medos.classList.add('dosed'); dose.setAttribute('aria-pressed', 'true'); }
+function holdStart(e) {
+  if (doseDone || pinned) return;
+  if (e.type === 'keydown') { if (e.repeat || (e.key !== ' ' && e.key !== 'Enter')) return; e.preventDefault(); }
+  holding = true; dose.classList.add('holding');
+  if (doseRaf === null) doseRaf = requestAnimationFrame(doseTick);
+}
+function holdEnd(e) {
+  if (e && e.type === 'keyup' && e.key !== ' ' && e.key !== 'Enter') return;
+  holding = false; dose.classList.remove('holding');
+  if (doseRaf === null && holdP > 0 && !doseDone) doseRaf = requestAnimationFrame(doseTick);
+}
+dose.addEventListener('pointerdown', e => { e.preventDefault(); try { dose.setPointerCapture(e.pointerId); } catch (_) {} holdStart(e); });
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => dose.addEventListener(t, holdEnd));
+dose.addEventListener('keydown', holdStart);
+dose.addEventListener('keyup', holdEnd);
+dose.addEventListener('blur', holdEnd);
+dose.addEventListener('contextmenu', e => e.preventDefault());
+
+/* ---------- FAQ ---------- */
+$$('.faq button').forEach(btn => btn.addEventListener('click', () => {
+  const open = btn.getAttribute('aria-expanded') === 'true';
+  btn.setAttribute('aria-expanded', String(!open));
+  $('#' + btn.getAttribute('aria-controls')).classList.toggle('open', !open);
+}));
+
+/* ---------- form ---------- */
+const form = $('#form'), formbox = $('#formbox');
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const nome = form.nome.value.trim(), zap = form.whatsapp.value.trim();
+  if (!nome) { form.nome.focus(); return; }
+  if (!zap) { form.whatsapp.focus(); return; }
+  formbox.classList.add('sent');
+  $('.ok h3', formbox).setAttribute('tabindex', '-1');
+  $('.ok h3', formbox).focus({ preventScroll: true });
+});
+
+/* ---------- particles ---------- */
+(() => {
+  const box = $('.drops'); const r = rng(7);
+  for (let i = 0; i < 14; i++) {
+    const d = document.createElement('i');
+    d.style.left = (r() * 100).toFixed(1) + '%';
+    d.style.animationDelay = (-r() * 14).toFixed(2) + 's';
+    d.style.animationDuration = (11 + r() * 8).toFixed(2) + 's';
+    d.style.height = (14 + r() * 16).toFixed(0) + 'px';
+    box.appendChild(d);
+  }
+})();
+
+/* ---------- reduced motion, both directions ---------- */
+let pinned = false;
+function pinToFinalStates() {
+  pinned = true;
+  secs.forEach(s => s.classList.add('in', 'done'));
+  plumbLine.style.transform = 'scaleY(1)'; plumbShown = 1;
+  ticks.forEach(t => { t.on = true; t.el.classList.add('on'); });
+  $$('.num').forEach(el => el.textContent = fmt(+el.dataset.to, +el.dataset.dec));
+  countersRan = true;
+  holdP = 1; writeFill(1); if (!doseDone) completeDose();
+}
+function unpinFinalStates() {
+  if (!pinned) return;
+  pinned = false;
+  plumbShown = -1; updatePlumb();
+}
+reduceMQ.addEventListener('change', e => { if (e.matches) pinToFinalStates(); else applyHeroMode(); });
+
+/* ---------- go ---------- */
+layoutPlumb();
+navState();
+if (reduceMQ.matches) pinToFinalStates();
+applyHeroMode();
+updatePlumb();
+addEventListener('load', () => { layoutPlumb(); updatePlumb(); });
+})();
+</script>
+</body>
+</html>
